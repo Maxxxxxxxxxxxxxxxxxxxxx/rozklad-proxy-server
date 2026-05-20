@@ -13,3 +13,17 @@ services:
       - .env
     environment:
       - NODE_ENV=prod
+    depends_on:
+      - mongodb
+
+  mongodb:
+    image: mongo:latest
+    container_name: rozklad_mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data:
