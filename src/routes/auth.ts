@@ -1,9 +1,9 @@
 import { Hono } from "hono";
 import { setCookie, getCookie, deleteCookie } from "hono/cookie";
 
-const app = new Hono();
+const authController = new Hono();
 
-app.post("/login", async (c) => {
+authController.post("/login", async (c) => {
   const { username, password } = await c.req.json();
 
   if (username === "admin" && password === "admin") {
@@ -21,9 +21,9 @@ app.post("/login", async (c) => {
   return c.json({ message: "Invalid credentials" }, 401);
 });
 
-app.post("/logout", (c) => {
+authController.post("/logout", (c) => {
   deleteCookie(c, "session_user");
   return c.json({ message: "Logged out successfully" });
 });
 
-export default app;
+export default authController;
