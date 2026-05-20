@@ -2,14 +2,15 @@
   "name": "proxy-server",
   "type": "module",
   "scripts": {
-    "dev": "bun run --hot src/index.ts"
+    "dev": "bun run --hot src/index.ts",
+    "clean": "node -e \"fs.rmSync('dist', { recursive: true, force: true })\"",
+    "build": "npm run clean && tsc"
   },
   "dependencies": {
     "hono": "^4.12.9",
-    "hono-sessions": "^0.8.1"
-  },
-  "devDependencies": {
+    "hono-sessions": "^0.8.1",
+    "typescript": "^6.0.3",
     "@types/bun": "latest",
-    "@types/node": "^25.8.0"
+    "@types/node": "^25.9.1"
   }
 }

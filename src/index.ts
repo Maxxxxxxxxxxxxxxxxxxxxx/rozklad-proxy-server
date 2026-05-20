@@ -5,8 +5,6 @@ import { sessionMiddleware, CookieStore } from "hono-sessions";
 
 const app = new Hono();
 
-export default app;
-
 const sessionStore = new CookieStore();
 const isDev = process.env.NODE_ENV === "development";
 
@@ -44,3 +42,8 @@ app.onError((err, c) => {
   console.error(err);
   return c.json({ error: "Internal Server Error" }, 500);
 });
+
+export default {
+  port: process.env.PORT || 3000,
+  fetch: app.fetch,
+};

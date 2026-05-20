@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { fetchDepaturesForStop } from "../service/ckanDataService";
+import { fetchDepaturesForStop } from "../service/ckanDataService.js";
 
 const app = new Hono();
 
