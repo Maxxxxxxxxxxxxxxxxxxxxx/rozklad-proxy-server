@@ -1,10 +1,11 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
-import { sessionMiddleware, CookieStore, Store } from "hono-sessions";
-import { mongoStore } from "./service/store.js";
-import mongoose, { mongo } from "mongoose";
-import authController from "./routes/auth.js";
+import { sessionMiddleware } from "hono-sessions";
+import { mongoStore } from "./model/session/store.js";
+import mongoose from "mongoose";
+import authController from "@/routes/auth.js";
+import departureController from "@/routes/departure.js";
 
 const app = new Hono();
 
@@ -69,6 +70,7 @@ app.onError((err, c) => {
 });
 
 app.route("/auth", authController);
+app.route("/departures", departureController);
 
 export default {
   port: process.env.PORT || 3000,

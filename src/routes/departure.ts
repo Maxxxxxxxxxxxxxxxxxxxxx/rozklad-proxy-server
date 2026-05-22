@@ -1,16 +1,34 @@
 import { Hono } from "hono";
 import { fetchDepaturesForStop } from "../service/ckanDataService.js";
+import { getDepartureModel } from "@/model/data/departure.js";
 
-const app = new Hono();
+const departureController = new Hono();
 
-app.get("/departures", async (c) => {
+departureController.get("", async (c) => {
   try {
     const stopId = c.req.query("stopId");
-    const ckanResponse = await fetchDepaturesForStop(stopId?.toString() || "");
-    return c.json(ckanResponse);
+    if (!stopId) return c.json({ error: "Stop ID is required" }, 400);
+
+    const model = getDepartureModel(stopId);
+
+    if ((await model.countDocuments()) > 0) {
+      const cachedData = await model.find().lean();
+      return c.json(cachedData, 200);
+    } else {
+      const ckanResponse = await fetchDepaturesForStop(
+        stopId?.toString() || "",
+      );
+
+      await model.insertMany(ckanResponse.departures);
+      return c.json(ckanResponse.departures, 200);
+    }
   } catch (error) {
-    return c.json({ error: "Failed to fetch departures" }, 500);
+    console.error(
+      `Error registering stop [stopId: ${c.req.query("stopId")}]:`,
+      error,
+    );
+    return c.json({ error: "Failed to register stop" }, 500);
   }
 });
 
-export default app;
+export default departureController;
