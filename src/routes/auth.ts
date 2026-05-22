@@ -1,12 +1,13 @@
 import { Hono } from "hono";
-import { setCookie, getCookie, deleteCookie } from "hono/cookie";
+import { setCookie, deleteCookie } from "hono/cookie";
 
 const authController = new Hono();
+const admin_password = process.env.ADMIN_PASSWORD || "admin";
 
 authController.post("/login", async (c) => {
-  const { username, password } = await c.req.json();
+  const { password } = await c.req.json();
 
-  if (username === "admin" && password === "admin") {
+  if (password === admin_password) {
     setCookie(c, "session_user", "admin", {
       path: "/",
       httpOnly: true,
