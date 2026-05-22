@@ -2,6 +2,7 @@ FROM oven/bun:1.1-alpine
 WORKDIR /app
 
 COPY package*.json ./
+COPY tsconfig.json ./
 RUN bun install --production
 COPY src/ ./src
 
