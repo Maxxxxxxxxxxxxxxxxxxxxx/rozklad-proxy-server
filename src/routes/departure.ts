@@ -20,6 +20,7 @@ departureController.get("", async (c) => {
       );
 
       await model.insertMany(ckanResponse.departures);
+
       return c.json(ckanResponse.departures, 200);
     }
   } catch (error) {

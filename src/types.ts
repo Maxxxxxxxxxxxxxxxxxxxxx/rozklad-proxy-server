@@ -16,6 +16,11 @@ export interface DepartureData {
   vehicleService: string;
 }
 
+export interface StopMetadata {
+  stopId: number;
+  lastUpdate: string;
+}
+
 export interface DeparturesResponse {
   lastUpdate: string;
   departures: DepartureData[];

@@ -34,3 +34,5 @@ export function getDepartureModel(stopId: string) {
 
   return mongoose.model<DepartureData>(modelName, DepartureSchema);
 }
+
+
