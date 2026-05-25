@@ -4,7 +4,9 @@
   "scripts": {
     "dev": "bun run --hot src/index.ts",
     "clean": "node -e \"fs.rmSync('dist', { recursive: true, force: true })\"",
-    "build": "npm run clean && tsc"
+    "build": "npm run clean && tsc",
+    "prettier:check": "prettier --check .",
+    "prettier:fix": "prettier --write ."
   },
   "dependencies": {
     "@types/bun": "latest",

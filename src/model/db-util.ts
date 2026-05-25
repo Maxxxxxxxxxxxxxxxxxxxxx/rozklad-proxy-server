@@ -1,8 +1,9 @@
 import mongoose from "mongoose";
 
-import { DeparturesResponse, StopMetadata } from "@/types.js";
+import { DeparturesResponse } from "@/types.js";
 import { getDepartureModel } from "@/model/data/departure.js";
 import { stopMetadataModel } from "@/model/data/stopMetadata.js";
+import { DEPARTURES_COLLECTION_NAME_REGEX } from "@/constants.js";
 
 export async function getCachedDepartures(stopId: string) {
   const metadata = await stopMetadataModel.findOne({ stopId: Number(stopId) });
@@ -10,14 +11,22 @@ export async function getCachedDepartures(stopId: string) {
 
   const cachedDepartures = await departureModel.find().lean();
 
+  if (!metadata && cachedDepartures.length === 0) {
+    console.warn(
+      `⚠️ No cached data found for stop ${stopId}. Returning empty response.`,
+    );
+    return {
+      lastUpdate: Date.now().toString(),
+      departures: [],
+    } as DeparturesResponse;
+  }
+
   if (metadata) {
     return {
       lastUpdate: metadata.lastUpdate,
       departures: cachedDepartures,
     } as DeparturesResponse;
-  }
-
-  throw new Error(`No cached data found for stop ${stopId}`);
+  } else throw new Error(`No cached data found for stop ${stopId}`);
 }
 
 export async function upsertDepartureData(
@@ -36,35 +45,18 @@ export async function upsertDepartureData(
     return;
   }
 
-  const session = await mongoose.startSession();
+  const departureModel = getDepartureModel(stopId);
 
-  try {
-    session.startTransaction();
-
-    const departureModel = getDepartureModel(stopId);
-
-    // upsert metadata with new lastUpdate
-    await stopMetadataModel.findOneAndUpdate(
+  // replace all departures for the stop with new data + upsert metadata in parallel
+  await Promise.allSettled([
+    stopMetadataModel.findOneAndUpdate(
       { stopId: Number(stopId) },
       { lastUpdate: departureResponse.lastUpdate },
-      { upsert: true, session },
-    );
-
-    // replace all departures for the stop with new data
-    await departureModel.deleteMany({}, { session });
-    await departureModel.insertMany(departureResponse.departures, { session });
-
-    await session.commitTransaction();
-  } catch (error) {
-    await session.abortTransaction();
-
-    console.error(
-      `Error updating departures for stop ${stopId} at ${new Date().toISOString()}:`,
-      error,
-    );
-  } finally {
-    session.endSession();
-  }
+      { upsert: true },
+    ),
+    departureModel.deleteMany({}),
+    departureModel.insertMany(departureResponse.departures),
+  ]);
 }
 
 export async function connectDb() {
@@ -86,4 +78,18 @@ export async function connectDb() {
     console.error("❌ Error connecting to MongoDB:", error);
     throw error;
   }
+}
+
+export async function listDepartureCollections(): Promise<string[]> {
+  const collections = await mongoose.connection.db!.listCollections().toArray();
+  return collections
+    .map((collection) => collection.name)
+    .filter((name): name is string =>
+      DEPARTURES_COLLECTION_NAME_REGEX.test(name),
+    );
+}
+
+export function getStopIdFromCollection(collectionName: string): string | null {
+  const match = DEPARTURES_COLLECTION_NAME_REGEX.exec(collectionName);
+  return match?.[1] ?? null;
 }

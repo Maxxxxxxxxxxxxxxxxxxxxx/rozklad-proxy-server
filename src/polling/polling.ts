@@ -1,37 +1,29 @@
+import { DEFAULT_POLL_INTERVAL_SECONDS } from "@/constants.js";
 import {
-  DEPARTURES_COLLECTION_NAME_REGEX,
-  DEFAULT_POLL_INTERVAL_SECONDS,
-} from "@/constants.js";
-import { getDepartureModel } from "@/model/data/departure.js";
-import { stopMetadataModel } from "@/model/data/stopMetadata.js";
+  getStopIdFromCollection,
+  listDepartureCollections,
+  upsertDepartureData,
+} from "@/model/db-util.js";
 import { fetchDepaturesForStop } from "@/service/ckanDataService.js";
 import { DeparturesResponse } from "@/types.js";
-import mongoose from "mongoose";
 
-async function listDepartureCollections(): Promise<string[]> {
-  const collections = await mongoose.connection.db!.listCollections().toArray();
-  return collections
-    .map((collection) => collection.name)
-    .filter((name): name is string =>
-      DEPARTURES_COLLECTION_NAME_REGEX.test(name),
-    );
-}
-
-function getStopIdFromCollection(collectionName: string): string | null {
-  const match = DEPARTURES_COLLECTION_NAME_REGEX.exec(collectionName);
-  return match?.[1] ?? null;
-}
-
-async function pollDepartureCollection(stopId: string) {
+async function upsert(stopId: string) {
   const response: DeparturesResponse = await fetchDepaturesForStop(stopId);
 
-  console.log(
-    `Successfully polled departures for ${stopId} at ${new Date().toISOString()}`,
-  );
+  try {
+    await upsertDepartureData(response, stopId);
 
-  console.log(
-    `Inserted ${response.departures.length} departures in departures_${stopId} at ${new Date().toISOString()}`,
-  );
+    console.log(`✅ Polled --> ${stopId} at ${new Date().toISOString()}`);
+    console.log(
+      `🚍 Inserted ${response.departures.length} --> departures_${stopId} at ${new Date().toISOString()}`,
+    );
+  } catch (error) {
+    console.error(
+      `Error inserting departures for stop ${stopId} at ${new Date().toISOString()}:`,
+      error,
+    );
+  }
+
   //   return await response.json();
 }
 
@@ -51,7 +43,7 @@ export async function pollDepartures(
     await Promise.allSettled(
       stopIds.map(async (stopId) => {
         try {
-          await pollDepartureCollection(stopId);
+          await upsert(stopId);
         } catch (error) {
           console.error(`Polling departures_${stopId} failed:`, error);
         }
