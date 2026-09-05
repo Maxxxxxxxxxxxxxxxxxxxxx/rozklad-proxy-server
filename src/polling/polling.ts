@@ -14,9 +14,6 @@ async function upsert(stopId: string) {
     await upsertDepartureData(response, stopId);
 
     console.log(`✅ Polled --> ${stopId} at ${new Date().toISOString()}`);
-    console.log(
-      `🚍 Inserted ${response.departures.length} --> departures_${stopId} at ${new Date().toISOString()}`,
-    );
   } catch (error) {
     console.error(
       `Error inserting departures for stop ${stopId} at ${new Date().toISOString()}:`,

@@ -13,7 +13,7 @@ departureController.get("", async (c) => {
     const model = getDepartureModel(stopId);
 
     if ((await model.countDocuments()) > 0) {
-      const cachedData = await model.find().lean();
+      const cachedData = await getCachedDepartures(stopId);
       return c.json(cachedData, 200);
     } else {
       return c.json(await getCachedDepartures(stopId), 200);

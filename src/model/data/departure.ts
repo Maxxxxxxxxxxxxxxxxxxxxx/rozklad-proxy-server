@@ -3,7 +3,7 @@ import { DepartureData } from "@/types.js";
 
 export const DepartureSchema = new mongoose.Schema<DepartureData>(
   {
-    id: { type: String, required: true, unique: true },
+    id: { type: String, required: true },
     delayInSeconds: { type: Number },
     estimatedTime: { type: String },
     headsign: { type: String },
@@ -14,12 +14,13 @@ export const DepartureSchema = new mongoose.Schema<DepartureData>(
     status: { type: String },
     theoreticalTime: { type: String },
     timestamp: { type: String },
-    trip: { type: Number },
+    trip: { type: Number, required: true },
     vehicleCode: { type: Number },
     vehicleId: { type: Number },
     vehicleService: { type: String },
   },
   {
+    id: false,
     timestamps: true,
     versionKey: false,
   },

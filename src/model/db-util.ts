@@ -5,10 +5,11 @@ import { getDepartureModel } from "@/model/data/departure.js";
 import { stopMetadataModel } from "@/model/data/stopMetadata.js";
 import { DEPARTURES_COLLECTION_NAME_REGEX } from "@/constants.js";
 
-export async function getCachedDepartures(stopId: string) {
+export async function getCachedDepartures(
+  stopId: string,
+): Promise<DeparturesResponse> {
   const metadata = await stopMetadataModel.findOne({ stopId: Number(stopId) });
   const departureModel = getDepartureModel(stopId);
-
   const cachedDepartures = await departureModel.find().lean();
 
   if (!metadata && cachedDepartures.length === 0) {
@@ -42,21 +43,48 @@ export async function upsertDepartureData(
     existingMetadata &&
     existingMetadata.lastUpdate === departureResponse.lastUpdate
   ) {
+    console.log(`🔄 No changes detected for stop ${stopId}`);
     return;
   }
-
   const departureModel = getDepartureModel(stopId);
-
-  // replace all departures for the stop with new data + upsert metadata in parallel
-  await Promise.allSettled([
-    stopMetadataModel.findOneAndUpdate(
-      { stopId: Number(stopId) },
-      { lastUpdate: departureResponse.lastUpdate },
+  const deleteResult = await departureModel.deleteMany({
+    trip: { $nin: departureResponse.departures.map((d) => d.trip) },
+  });
+  const upserted = departureResponse.departures.map((departure) =>
+    departureModel.updateOne(
+      { trip: departure.trip },
+      { $set: departure },
       { upsert: true },
     ),
-    departureModel.deleteMany({}),
-    departureModel.insertMany(departureResponse.departures),
-  ]);
+  );
+  await Promise.allSettled(upserted);
+  await stopMetadataModel.findOneAndUpdate(
+    { stopId: Number(stopId) },
+    { lastUpdate: departureResponse.lastUpdate },
+    { upsert: true },
+  );
+
+  console.log(
+    `🗑️ Deleted ${deleteResult.deletedCount} departures for stop ${stopId}`,
+  );
+  console.log(`🔄 Upserted ${upserted.length} departures for stop ${stopId}`);
+
+  console.log(
+    `✅ new departures_${stopId} length: ${await departureModel.countDocuments()} at ${new Date().toISOString()}`,
+  );
+
+  // const deleteResult = await departureModel.deleteMany({});
+  // console.log(deleteResult.deletedCount, `departures_${stopId} deleted`);
+
+  // // replace all departures for the stop with new data + upsert metadata in parallel
+  // await Promise.allSettled([
+  //   stopMetadataModel.findOneAndUpdate(
+  //     { stopId: Number(stopId) },
+  //     { lastUpdate: departureResponse.lastUpdate },
+  //     { upsert: true },
+  //   ),
+  //   departureModel.insertMany(departureResponse.departures),
+  // ]);
 }
 
 export async function connectDb() {
