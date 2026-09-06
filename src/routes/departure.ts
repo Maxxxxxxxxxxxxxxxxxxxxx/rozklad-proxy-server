@@ -1,15 +1,18 @@
 import { Hono } from "hono";
 import { getDepartureModel } from "@/model/data/departure.js";
-import { getCachedDepartures } from "@/model/db-util.js";
+import {
+  bumpStopPollStatus,
+  getCachedDepartures,
+  stopIdSubscribe,
+} from "@/model/db-util.js";
 
 const departureController = new Hono();
 
 departureController.get("", async (c) => {
   try {
-    ``;
     const stopId = c.req.query("stopId");
     if (!stopId) return c.json({ error: "Stop ID is required" }, 400);
-
+    bumpStopPollStatus(stopId); // Update the lastPolled timestamp for the stop
     const model = getDepartureModel(stopId);
 
     if ((await model.countDocuments()) > 0) {

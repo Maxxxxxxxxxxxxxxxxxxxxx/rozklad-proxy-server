@@ -19,6 +19,7 @@ export interface DepartureData {
 export interface StopMetadata {
   stopId: number;
   lastUpdate: string;
+  lastPolled: Date; // for tracking when the stop was last polled, internal
 }
 
 export interface DeparturesResponse {

@@ -5,7 +5,7 @@ import { sessionMiddleware } from "hono-sessions";
 import { mongoStore } from "./model/session/store.js";
 import authController from "@/routes/auth.js";
 import departureController from "@/routes/departure.js";
-import { pollDepartures } from "./polling/polling.js";
+import { pollDepartures, pollStaleStopCleanup } from "./polling/polling.js";
 import { gracefulShutdown } from "./shutdown.js";
 import { connectDb } from "./model/db-util.js";
 
@@ -57,6 +57,10 @@ app.route("/departures", departureController);
 
 pollDepartures().catch((error) => {
   console.error("❌ Error starting departure polling:", error);
+});
+
+pollStaleStopCleanup().catch((error) => {
+  console.error("❌ Error starting stale stop cleanup polling:", error);
 });
 
 export default {
