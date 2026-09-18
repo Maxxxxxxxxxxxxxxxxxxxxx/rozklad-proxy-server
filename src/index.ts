@@ -8,6 +8,7 @@ import departureController from "@/routes/departure.js";
 import { pollDepartures, pollStaleStopCleanup } from "./polling/polling.js";
 import { gracefulShutdown } from "./shutdown.js";
 import { connectDb } from "./model/db-util.js";
+import { ALLOWED_HOSTS } from "./constants.js";
 
 const app = new Hono();
 const isDev = process.env.NODE_ENV === "development";
@@ -22,14 +23,15 @@ if (isDev) {
 }
 
 try {
-  if (!process.env.FE_ORIGIN_URL) throw new Error("FE_ORIGIN_URL is not set");
+  if (!isDev && ALLOWED_HOSTS.length === 0)
+    throw new Error("ALLOWED_HOSTS is not set");
   if (!process.env.AUTH_ENCRYPTION_KEY)
     throw new Error("AUTH_ENCRYPTION_KEY is not set");
 
   app.use(
     "*",
     cors({
-      origin: isDev ? "*" : process.env.FE_ORIGIN_URL!,
+      origin: isDev ? "*" : ALLOWED_HOSTS,
     }),
     logger(),
     sessionMiddleware({

@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: rozklad_reverse_proxy
-    restart: unless-stopped
+    restart: no
     ports:
       - "${PORT:-3000}:${PORT:-3000}"
     env_file:
@@ -19,7 +19,7 @@ services:
   mongodb:
     image: mongo:latest
     container_name: rozklad_mongodb
-    restart: unless-stopped
+    restart: no
     ports:
       - "27017:27017"
     volumes:

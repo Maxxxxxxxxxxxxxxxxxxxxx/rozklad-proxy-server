@@ -3,7 +3,6 @@ import { getDepartureModel } from "@/model/data/departure.js";
 import {
   bumpStopPollStatus,
   getCachedDepartures,
-  stopIdSubscribe,
 } from "@/model/db-util.js";
 
 const departureController = new Hono();
